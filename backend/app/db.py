@@ -16,7 +16,8 @@ def get_database_path() -> Path:
     if env_path:
         return Path(env_path)
 
-    return Path(__file__).resolve().parent.parent / "data" / "todo.sqlite3"
+    repo_root = Path(__file__).resolve().parents[2]
+    return repo_root / "data" / "todo.sqlite3"
 
 
 def get_connection() -> sqlite3.Connection:

@@ -12,8 +12,20 @@ $frontendPath = Join-Path -Path $projectRoot -ChildPath 'frontend'
 if ($Install) {
     Write-Host '=== Backend セットアップ ==='
     python -m venv "$backendPath/.venv"
-    & "$backendPath/.venv/Scripts/pip.exe" install --upgrade pip
-    & "$backendPath/.venv/Scripts/pip.exe" install -r "$backendPath/requirements.txt"
+
+    $pipPathWindows = Join-Path -Path "$backendPath/.venv" -ChildPath 'Scripts/pip.exe'
+    $pipPathUnix = Join-Path -Path "$backendPath/.venv" -ChildPath 'bin/pip'
+
+    if (Test-Path $pipPathWindows) {
+        $pipPath = $pipPathWindows
+    } elseif (Test-Path $pipPathUnix) {
+        $pipPath = $pipPathUnix
+    } else {
+        throw "pip が見つかりませんでした: $pipPathWindows または $pipPathUnix を確認してください。"
+    }
+
+    & $pipPath install --upgrade pip
+    & $pipPath install -r "$backendPath/requirements.txt"
 
     Write-Host '=== Frontend セットアップ ==='
     Push-Location $frontendPath
@@ -22,7 +34,19 @@ if ($Install) {
 }
 
 Write-Host '=== Backend 起動 ==='
-Start-Process -FilePath "$backendPath/.venv/Scripts/python.exe" -ArgumentList 'run.py' -WorkingDirectory $backendPath
+Write-Host '=== Python 実行ファイルの確認 ==='
+$pythonPathWindows = Join-Path -Path "$backendPath/.venv" -ChildPath 'Scripts/python.exe'
+$pythonPathUnix = Join-Path -Path "$backendPath/.venv" -ChildPath 'bin/python'
+
+if (Test-Path $pythonPathWindows) {
+    $pythonPath = $pythonPathWindows
+} elseif (Test-Path $pythonPathUnix) {
+    $pythonPath = $pythonPathUnix
+} else {
+    throw "Python 実行ファイルが見つかりませんでした: $pythonPathWindows または $pythonPathUnix を確認してください。"
+}
+
+Start-Process -FilePath $pythonPath -ArgumentList 'run.py' -WorkingDirectory $backendPath
 
 Start-Sleep -Seconds 3
 

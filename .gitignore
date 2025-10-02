@@ -5,3 +5,7 @@
 # Python キャッシュ
 __pycache__/
 *.pyc
+
+# フロントエンドの依存関係とビルド成果物
+frontend/node_modules/
+frontend/dist/

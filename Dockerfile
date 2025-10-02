@@ -22,7 +22,10 @@ RUN python -m venv /opt/venv \
 COPY backend/ ./backend/
 COPY --from=frontend-build /workspace/frontend/dist ./frontend_dist/
 
-ENV PATH="/opt/venv/bin:$PATH"
+RUN mkdir -p /app/backend/data
+
+ENV PATH="/opt/venv/bin:$PATH" \
+    TODO_DB_PATH=/app/backend/data/todo.sqlite3
 WORKDIR /app/backend
 
 EXPOSE 5000

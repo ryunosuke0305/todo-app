@@ -15,7 +15,8 @@ def get_database_path() -> Path:
     env_path = os.getenv("TODO_DB_PATH")
     if env_path:
         return Path(env_path)
-    return Path(__file__).resolve().parent / "todo.sqlite3"
+
+    return Path(__file__).resolve().parent.parent / "data" / "todo.sqlite3"
 
 
 def get_connection() -> sqlite3.Connection:

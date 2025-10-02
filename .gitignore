@@ -1,0 +1,7 @@
+# SQLite データベースファイル
+*.sqlite3
+*.db
+
+# Python キャッシュ
+__pycache__/
+*.pyc

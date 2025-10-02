@@ -25,7 +25,8 @@ if ($Install) {
     }
 
     & $pipPath install --upgrade pip
-    & $pipPath install -r "$backendPath/requirements.txt"
+    $requirementsPath = Join-Path -Path $backendPath -ChildPath 'requirements.txt'
+    & $pipPath install -r $requirementsPath
 
     Write-Host '=== Frontend セットアップ ==='
     Push-Location $frontendPath

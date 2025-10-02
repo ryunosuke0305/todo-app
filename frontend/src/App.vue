@@ -216,6 +216,14 @@ import axios from 'axios'
 import { Modal } from 'bootstrap'
 import TaskList from './components/TaskList.vue'
 
+const rawApiBaseUrl = import.meta.env.VITE_API_BASE_URL
+const apiBaseUrl =
+  typeof rawApiBaseUrl === 'string' && rawApiBaseUrl.trim().length > 0
+    ? rawApiBaseUrl.replace(/\/+$/, '')
+    : '/api'
+
+const apiClient = axios.create({ baseURL: apiBaseUrl })
+
 const tasks = ref([])
 const isEditing = ref(false)
 const editingId = ref(null)
@@ -273,7 +281,7 @@ function handleModalHidden() {
 
 async function loadTasks() {
   try {
-    const response = await axios.get('/api/tasks')
+    const response = await apiClient.get('/tasks')
     tasks.value = response.data.tasks ?? []
     globalError.value = ''
   } catch (error) {
@@ -347,9 +355,9 @@ async function handleSubmit() {
 
   try {
     if (isEditing.value && editingId.value) {
-      await axios.put(`/api/tasks/${editingId.value}`, payload)
+      await apiClient.put(`/tasks/${editingId.value}`, payload)
     } else {
-      await axios.post('/api/tasks', payload)
+      await apiClient.post('/tasks', payload)
     }
     await loadTasks()
     hideModal()
@@ -368,7 +376,7 @@ async function handleDelete(task) {
   }
 
   try {
-    await axios.delete(`/api/tasks/${task.id}`)
+    await apiClient.delete(`/tasks/${task.id}`)
     if (editingId.value === task.id) {
       hideModal()
     }

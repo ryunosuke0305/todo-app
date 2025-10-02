@@ -13,18 +13,44 @@
       <li class="list-inline-item">作業量: {{ task.effort }}</li>
       <li class="list-inline-item">期間: {{ task.start_date }} ~ {{ task.due_date }}</li>
     </ul>
+    <div class="mt-3 d-flex flex-wrap gap-2">
+      <button
+        type="button"
+        class="btn btn-sm btn-outline-primary"
+        @click="emit('edit', task)"
+      >
+        編集
+      </button>
+      <button
+        type="button"
+        class="btn btn-sm btn-outline-secondary"
+        @click="emit('add-child', task)"
+      >
+        子タスク追加
+      </button>
+      <button
+        type="button"
+        class="btn btn-sm btn-outline-danger"
+        @click="emit('delete', task)"
+      >
+        削除
+      </button>
+    </div>
     <div v-if="task.children?.length" class="mt-3 ms-3 border-start ps-3">
       <TaskItem
         v-for="child in task.children"
         :key="child.id"
         :task="child"
+        @edit="emit('edit', $event)"
+        @delete="emit('delete', $event)"
+        @add-child="emit('add-child', $event)"
       />
     </div>
   </div>
 </template>
 
 <script setup>
-import { computed, defineProps } from 'vue'
+import { computed, defineEmits, defineProps } from 'vue'
 
 const props = defineProps({
   task: {
@@ -32,6 +58,8 @@ const props = defineProps({
     required: true
   }
 })
+
+const emit = defineEmits(['edit', 'delete', 'add-child'])
 
 const statusClass = computed(() => {
   const status = props.task.status

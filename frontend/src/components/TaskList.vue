@@ -4,7 +4,6 @@
       v-for="task in tasks"
       :key="task.id"
       :task="task"
-      :level="0"
     />
   </div>
   <p v-else class="text-muted">表示できるタスクがありません。</p>

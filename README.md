@@ -78,15 +78,16 @@ docker-compose up -d --build
    .\run.bat
    ```
    - 初回実行時は `backend/.venv` に仮想環境が作成され、Python 依存関係が自動的にインストールされます。
-   - フロントエンドの `node_modules` が存在しない場合は自動的に `npm install` が実行されます。
-   - 依存関係を再インストールしたい場合は以下のように `-Install` オプションを付けてください。
+   - フロントエンドの `node_modules` が存在しない場合は `npm install` が自動的に実行されます。
+   - 依存関係を再インストールしたい場合は `-Install` オプションを付けてください。
      ```powershell
      .\run.bat -Install
      ```
+   - セットアップ完了後、バックエンドとフロントエンドが別ウィンドウで起動します。ログを確認し、終了するときは各ウィンドウを閉じてください。
 3. バックエンド API: http://localhost:5000
 4. フロントエンド: http://localhost:8080
 
-> メモ: `run.bat` は内部で `scripts/start_local.ps1` を呼び出し、仮想環境の作成やプロセス起動をまとめて行います。PowerShell から直接 `scripts/start_local.ps1` を実行しても同じ挙動になります。
+> メモ: `run.bat` 単体でセットアップからサーバー起動までを行います。Python 3.x と Node.js/npm が事前にインストールされている必要があります。
 
 ### Docker を利用した起動
 単一コンテナで API とフロントエンド資産をまとめる Dockerfile をルートに配置しています。将来的な本番デプロイや CI 用途を想定しています。
@@ -121,7 +122,6 @@ docker run --rm -p 5000:5000 todo-app
 │   ├── Dockerfile
 │   └── package.json
 ├── run.bat           # Windows 用起動バッチ
-├── scripts/          # 起動スクリプト
 ├── docker-compose.yml
 ├── .env.example
 └── README.md

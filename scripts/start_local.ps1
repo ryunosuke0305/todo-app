@@ -176,11 +176,33 @@ if ($shouldInstallBackendDeps) {
 Ensure-FrontendDependencies -FrontendPath $frontendPath -ForceInstall:$Install
 
 Write-Host '=== Backend 起動 ==='
-Start-Process -FilePath $pythonPath -ArgumentList 'run.py' -WorkingDirectory $backendPath
+$backendProcess = Start-Process -FilePath $pythonPath -ArgumentList 'run.py' -WorkingDirectory $backendPath -PassThru
 
-Start-Sleep -Seconds 3
+$didPushLocation = $false
 
-Write-Host '=== Frontend 起動 ==='
-Push-Location $frontendPath
-npm run dev -- --host
-Pop-Location
+try {
+    Start-Sleep -Seconds 3
+
+    Write-Host '=== Frontend 起動 ==='
+    Write-Host 'ブラウザで http://localhost:8080 にアクセスできます。' -ForegroundColor Cyan
+    Push-Location $frontendPath
+    $didPushLocation = $true
+    npm run dev -- --host
+}
+finally {
+    if ($didPushLocation) {
+        Pop-Location
+    }
+
+    if ($backendProcess -and -not $backendProcess.HasExited) {
+        Write-Host '=== Backend 停止 ==='
+        try {
+            Stop-Process -Id $backendProcess.Id -ErrorAction Stop
+        }
+        catch {
+            Write-Warning "バックエンド プロセスの停止に失敗しました: $($_.Exception.Message)"
+        }
+    }
+}
+
+Write-Host 'ローカル開発環境を終了しました。'

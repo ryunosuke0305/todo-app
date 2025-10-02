@@ -119,31 +119,47 @@ if defined NEED_NODE_INSTALL (
     popd
 )
 
-if not defined NPM_AVAILABLE (
-    echo npm コマンドが見つからなかったため、フロントエンドを起動できません。
-    goto ERROR
-)
-
 if not exist "%VENV_DIR%\Scripts\activate.bat" (
     echo 仮想環境のアクティベーションスクリプトが見つかりませんでした。
     goto ERROR
 )
 
 echo.
-echo === サーバーを起動します ===
-start "todo-app Backend" cmd /k "cd /d \"%BACKEND_DIR%\" ^&^& call .venv\Scripts\activate.bat ^&^& python run.py"
-if errorlevel 1 goto ERROR
+echo === フロントエンドをビルドします ===
+set "NEED_NODE_BUILD="
+if defined FORCE_INSTALL (
+    set "NEED_NODE_BUILD=1"
+) else if not exist "%FRONTEND_DIR%\dist\index.html" (
+    set "NEED_NODE_BUILD=1"
+)
 
-if exist "%FRONTEND_DIR%\package.json" (
-    start "todo-app Frontend" cmd /k "cd /d \"%FRONTEND_DIR%\" ^&^& npm run dev -- --host"
-    if errorlevel 1 goto ERROR
+if defined NEED_NODE_BUILD (
+    if not defined NPM_AVAILABLE (
+        echo npm コマンドが見つからなかったため、フロントエンド資産をビルドできません。
+        goto ERROR
+    )
+    pushd "%FRONTEND_DIR%"
+    call npm run build
+    if errorlevel 1 (
+        popd
+        goto ERROR
+    )
+    popd
 )
 
 echo.
-echo バックエンドとフロントエンドを新しいウィンドウで起動しました。
-echo 各ウィンドウを閉じるとサーバーが停止します。
-pause
-exit /b 0
+echo === サーバーを起動します ===
+pushd "%BACKEND_DIR%"
+call .venv\Scripts\activate.bat
+if errorlevel 1 (
+    popd
+    goto ERROR
+)
+python run.py
+set "EXIT_CODE=%ERRORLEVEL%"
+call deactivate >nul 2>&1
+popd
+exit /b %EXIT_CODE%
 
 :ERROR
 echo.

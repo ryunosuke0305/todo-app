@@ -68,8 +68,8 @@ cd task-management-tool
 cp .env.example .env
 docker-compose up -d --build
 ```
-- フロントエンド: http://localhost:8080
-- バックエンド API: http://localhost:5000
+- バックエンド & フロントエンド: http://localhost:5000
+  - ルート (`/`) にアクセスするとビルド済みのフロントエンドが表示されます。
 
 ### ローカル（Windows）環境での起動
 1. `git pull` で最新の状態を取得します。
@@ -83,9 +83,9 @@ docker-compose up -d --build
      ```powershell
      .\run.bat -Install
      ```
-   - セットアップ完了後、バックエンドとフロントエンドが別ウィンドウで起動します。ログを確認し、終了するときは各ウィンドウを閉じてください。
-3. バックエンド API: http://localhost:5000
-4. フロントエンド: http://localhost:8080
+   - セットアップ完了後、フロントエンド資産がビルドされ、バックエンドサーバーが同じウィンドウで起動します。終了するときは `Ctrl+C` でプロセスを停止してください。
+3. バックエンド & フロントエンド: http://localhost:5000
+   - ルート (`/`) にアクセスするとビルド済みのフロントエンドが表示されます。
 
 > メモ: `run.bat` 単体でセットアップからサーバー起動までを行います。Python 3.x と Node.js/npm が事前にインストールされている必要があります。
 
@@ -100,8 +100,7 @@ docker build -t todo-app .
 docker run --rm -p 5000:5000 todo-app
 ```
 
-- バックエンド API: http://localhost:5000
-- フロントエンド: ルートコンテナにビルド成果物が同梱されるため、静的ホスティング設定の追加で配信できます（今後の拡張ポイント）。
+- バックエンド & フロントエンド: http://localhost:5000 （ルートアクセスでビルド済み HTML を配信）
 
 ### サンプルデータ
 - `backend/tests/data/sample_tasks.json` にテストや UI 検証で利用できるサンプルタスクを同梱しています。

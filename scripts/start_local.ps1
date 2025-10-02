@@ -4,9 +4,10 @@ Param(
 
 $ErrorActionPreference = 'Stop'
 
-$projectRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
-$backendPath = Join-Path $projectRoot '..' 'backend'
-$frontendPath = Join-Path $projectRoot '..' 'frontend'
+$scriptDirectory = Split-Path -Parent $MyInvocation.MyCommand.Path
+$projectRoot = Split-Path -Parent $scriptDirectory
+$backendPath = Join-Path -Path $projectRoot -ChildPath 'backend'
+$frontendPath = Join-Path -Path $projectRoot -ChildPath 'frontend'
 
 if ($Install) {
     Write-Host '=== Backend セットアップ ==='

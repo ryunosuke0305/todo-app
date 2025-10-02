@@ -1,4 +1,4 @@
-﻿Param(
+Param(
     [switch]$Install
 )
 
@@ -8,50 +8,174 @@ $PSDefaultParameterValues['*:Encoding'] = 'utf8'
 
 $ErrorActionPreference = 'Stop'
 
+function Get-VenvPythonPath {
+    param(
+        [string]$VenvPath
+    )
+
+    $candidates = @(
+        Join-Path -Path $VenvPath -ChildPath 'Scripts/python.exe',
+        Join-Path -Path $VenvPath -ChildPath 'bin/python'
+    )
+
+    foreach ($candidate in $candidates) {
+        if (Test-Path $candidate) {
+            return $candidate
+        }
+    }
+
+    return $null
+}
+
+function Get-VenvPipPath {
+    param(
+        [string]$VenvPath
+    )
+
+    $candidates = @(
+        Join-Path -Path $VenvPath -ChildPath 'Scripts/pip.exe',
+        Join-Path -Path $VenvPath -ChildPath 'bin/pip'
+    )
+
+    foreach ($candidate in $candidates) {
+        if (Test-Path $candidate) {
+            return $candidate
+        }
+    }
+
+    return $null
+}
+
+function Get-CommandPath {
+    param(
+        [System.Management.Automation.CommandInfo]$Command
+    )
+
+    if (-not $Command) {
+        return $null
+    }
+
+    if ($Command.Source) {
+        return $Command.Source
+    }
+
+    if ($Command.PSObject.Properties['Path']) {
+        return $Command.Path
+    }
+
+    return $Command.Definition
+}
+
+function New-VirtualEnvironment {
+    param(
+        [string]$VenvPath
+    )
+
+    $pythonBootstrapCandidates = @('python', 'python3')
+
+    foreach ($candidate in $pythonBootstrapCandidates) {
+        $command = Get-Command $candidate -ErrorAction SilentlyContinue
+        $commandPath = Get-CommandPath -Command $command
+        if ($commandPath) {
+            Write-Host "=== $($command.Name) を使用して仮想環境を作成します ==="
+            & $commandPath -m venv $VenvPath
+            return
+        }
+    }
+
+    $pyLauncher = Get-Command 'py' -ErrorAction SilentlyContinue
+    $pyLauncherPath = Get-CommandPath -Command $pyLauncher
+    if ($pyLauncherPath) {
+        Write-Host '=== py ランチャーを使用して仮想環境を作成します ==='
+        & $pyLauncherPath -3 -m venv $VenvPath
+        return
+    }
+
+    throw "Python が見つかりませんでした。Python 3.x をインストールし、パスを通してください。"
+}
+
+function Ensure-BackendVirtualEnvironment {
+    param(
+        [string]$VenvPath
+    )
+
+    $pythonPath = Get-VenvPythonPath -VenvPath $VenvPath
+    $isNew = $false
+
+    if (-not $pythonPath) {
+        Write-Host '=== 仮想環境が存在しないため新規作成します ==='
+        New-VirtualEnvironment -VenvPath $VenvPath
+        $pythonPath = Get-VenvPythonPath -VenvPath $VenvPath
+        $isNew = $true
+    }
+
+    if (-not $pythonPath) {
+        throw "仮想環境の Python 実行ファイルを取得できませんでした: $VenvPath"
+    }
+
+    return [PSCustomObject]@{
+        PythonPath = $pythonPath
+        IsNew      = $isNew
+    }
+}
+
+function Install-BackendDependencies {
+    param(
+        [string]$VenvPath,
+        [string]$BackendPath
+    )
+
+    $pipPath = Get-VenvPipPath -VenvPath $VenvPath
+
+    if (-not $pipPath) {
+        throw "pip が見つかりませんでした: $VenvPath の仮想環境を確認してください。"
+    }
+
+    Write-Host '=== Backend 依存関係のインストール ==='
+    & $pipPath install --upgrade pip
+    $requirementsPath = Join-Path -Path $BackendPath -ChildPath 'requirements.txt'
+    & $pipPath install -r $requirementsPath
+}
+
+function Ensure-FrontendDependencies {
+    param(
+        [string]$FrontendPath,
+        [switch]$ForceInstall
+    )
+
+    $nodeModulesPath = Join-Path -Path $FrontendPath -ChildPath 'node_modules'
+
+    if ($ForceInstall -or -not (Test-Path $nodeModulesPath)) {
+        $npmCommand = Get-Command 'npm' -ErrorAction SilentlyContinue
+        if (-not $npmCommand) {
+            throw 'npm コマンドが見つかりませんでした。Node.js をインストールし、パスを通してください。'
+        }
+
+        Write-Host '=== Frontend セットアップ ==='
+        Push-Location $FrontendPath
+        npm install
+        Pop-Location
+    }
+}
+
 $scriptDirectory = Split-Path -Parent $MyInvocation.MyCommand.Path
 $projectRoot = Split-Path -Parent $scriptDirectory
 $backendPath = Join-Path -Path $projectRoot -ChildPath 'backend'
 $frontendPath = Join-Path -Path $projectRoot -ChildPath 'frontend'
 $backendVenvPath = Join-Path -Path $backendPath -ChildPath '.venv'
 
-if ($Install) {
-    Write-Host '=== Backend セットアップ ==='
-    python -m venv "$backendVenvPath"
+Write-Host '=== Backend 仮想環境の確認 ==='
+$venvInfo = Ensure-BackendVirtualEnvironment -VenvPath $backendVenvPath
+$pythonPath = $venvInfo.PythonPath
 
-    $pipPathWindows = Join-Path -Path $backendVenvPath -ChildPath 'Scripts/pip.exe'
-    $pipPathUnix = Join-Path -Path $backendVenvPath -ChildPath 'bin/pip'
-
-    if (Test-Path $pipPathWindows) {
-        $pipPath = $pipPathWindows
-    } elseif (Test-Path $pipPathUnix) {
-        $pipPath = $pipPathUnix
-    } else {
-        throw "pip が見つかりませんでした: $pipPathWindows または $pipPathUnix を確認してください。"
-    }
-
-    & $pipPath install --upgrade pip
-    $requirementsPath = Join-Path -Path $backendPath -ChildPath 'requirements.txt'
-    & $pipPath install -r $requirementsPath
-
-    Write-Host '=== Frontend セットアップ ==='
-    Push-Location $frontendPath
-    npm install
-    Pop-Location
+$shouldInstallBackendDeps = $Install -or $venvInfo.IsNew
+if ($shouldInstallBackendDeps) {
+    Install-BackendDependencies -VenvPath $backendVenvPath -BackendPath $backendPath
 }
+
+Ensure-FrontendDependencies -FrontendPath $frontendPath -ForceInstall:$Install
 
 Write-Host '=== Backend 起動 ==='
-Write-Host '=== Python 実行ファイルの確認 ==='
-$pythonPathWindows = Join-Path -Path $backendVenvPath -ChildPath 'Scripts/python.exe'
-$pythonPathUnix = Join-Path -Path $backendVenvPath -ChildPath 'bin/python'
-
-if (Test-Path $pythonPathWindows) {
-    $pythonPath = $pythonPathWindows
-} elseif (Test-Path $pythonPathUnix) {
-    $pythonPath = $pythonPathUnix
-} else {
-    throw "Python 実行ファイルが見つかりませんでした: $pythonPathWindows または $pythonPathUnix を確認してください。"
-}
-
 Start-Process -FilePath $pythonPath -ArgumentList 'run.py' -WorkingDirectory $backendPath
 
 Start-Sleep -Seconds 3

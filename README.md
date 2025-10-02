@@ -73,14 +73,14 @@ docker-compose up -d --build
 
 ### ローカル（Windows）環境での起動
 1. PowerShell を管理者権限なしで開く。
-2. 初回のみ以下のコマンドで依存関係をインストール。
-   ```powershell
-   .\scripts\start_local.ps1 -Install
-   ```
-3. バックエンドとフロントエンドを同時に起動。
+2. 初回は以下のコマンドで起動します（仮想環境の作成と依存関係のインストールが自動で行われます）。
    ```powershell
    .\scripts\start_local.ps1
    ```
+   - 依存関係を再インストールしたい場合は `-Install` オプションを付けて実行してください。
+     ```powershell
+     .\scripts\start_local.ps1 -Install
+     ```
    - バックエンド: http://localhost:5000
    - フロントエンド: http://localhost:8080
 

@@ -50,7 +50,8 @@ docker build -t todo-app .
 docker run --rm -p 5000:5000 todo-app
 ```
 - ブラウザから `http://localhost:5000` にアクセスするとフロントエンドと API が利用できます。
-- タスクデータベースは `backend/data/` ディレクトリに保存されます。将来的に永続化したい場合は、例として `docker run --rm -p 5000:5000 -v $(pwd)/backend/data:/app/backend/data todo-app` のようにボリュームをバインドして利用できます。
+- タスクデータベースはリポジトリ直下の `data/` ディレクトリに保存されます。
+- 永続化したい場合は `docker run --rm -p 5000:5000 -v $(pwd)/data:/app/data todo-app` のようにボリュームをバインドしてください。
 
 ## ディレクトリ構成
 ```

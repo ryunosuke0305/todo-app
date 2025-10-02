@@ -8,13 +8,14 @@ $scriptDirectory = Split-Path -Parent $MyInvocation.MyCommand.Path
 $projectRoot = Split-Path -Parent $scriptDirectory
 $backendPath = Join-Path -Path $projectRoot -ChildPath 'backend'
 $frontendPath = Join-Path -Path $projectRoot -ChildPath 'frontend'
+$backendVenvPath = Join-Path -Path $backendPath -ChildPath '.venv'
 
 if ($Install) {
     Write-Host '=== Backend セットアップ ==='
-    python -m venv "$backendPath/.venv"
+    python -m venv "$backendVenvPath"
 
-    $pipPathWindows = Join-Path -Path "$backendPath/.venv" -ChildPath 'Scripts/pip.exe'
-    $pipPathUnix = Join-Path -Path "$backendPath/.venv" -ChildPath 'bin/pip'
+    $pipPathWindows = Join-Path -Path $backendVenvPath -ChildPath 'Scripts/pip.exe'
+    $pipPathUnix = Join-Path -Path $backendVenvPath -ChildPath 'bin/pip'
 
     if (Test-Path $pipPathWindows) {
         $pipPath = $pipPathWindows
@@ -36,8 +37,8 @@ if ($Install) {
 
 Write-Host '=== Backend 起動 ==='
 Write-Host '=== Python 実行ファイルの確認 ==='
-$pythonPathWindows = Join-Path -Path "$backendPath/.venv" -ChildPath 'Scripts/python.exe'
-$pythonPathUnix = Join-Path -Path "$backendPath/.venv" -ChildPath 'bin/python'
+$pythonPathWindows = Join-Path -Path $backendVenvPath -ChildPath 'Scripts/python.exe'
+$pythonPathUnix = Join-Path -Path $backendVenvPath -ChildPath 'bin/python'
 
 if (Test-Path $pythonPathWindows) {
     $pythonPath = $pythonPathWindows

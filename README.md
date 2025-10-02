@@ -9,7 +9,7 @@
 Backend: Python 3.x, Flask
 Frontend: Vue.js, Bootstrap
 Database: (TBD - PostgreSQL, SQLite etc.)
-Deployment: Docker, Docker Compose
+Deployment: Docker
 
 3. 要件定義（機能一覧）
 3.1. タスク管理機能
@@ -61,16 +61,6 @@ Microsoft Teamsとの連携。
 4. 開発環境の構築
 本プロジェクトはDockerを使用して環境を構築します。
 
-### Docker を利用した起動
-```bash
-git clone [repository-url]
-cd task-management-tool
-cp .env.example .env
-docker-compose up -d --build
-```
-- フロントエンド: http://localhost:8080
-- バックエンド API: http://localhost:5000
-
 ### ローカル（Windows）環境での起動
 1. `git pull` で最新の状態を取得します。
 2. プロジェクトルートにある `run.bat` をダブルクリックするか、PowerShell/コマンドプロンプトから実行します。
@@ -79,13 +69,13 @@ docker-compose up -d --build
    ```
    - 初回実行時は `backend/.venv` に仮想環境が作成され、Python 依存関係が自動的にインストールされます。
    - フロントエンドの `node_modules` が存在しない場合は `npm install` が自動的に実行されます。
+   - フロントエンドのビルド成果物が存在しない場合は `npm run build` が自動的に実行されます。
    - 依存関係を再インストールしたい場合は `-Install` オプションを付けてください。
      ```powershell
      .\run.bat -Install
      ```
-   - セットアップ完了後、バックエンドとフロントエンドが別ウィンドウで起動します。ログを確認し、終了するときは各ウィンドウを閉じてください。
-3. バックエンド API: http://localhost:5000
-4. フロントエンド: http://localhost:8080
+   - セットアップ完了後、フルスタックサーバーが同じウィンドウで起動します。終了するときは `Ctrl+C` で停止してください。
+3. アプリケーション: http://localhost:5000 （API は `/api` プレフィックス配下）
 
 > メモ: `run.bat` 単体でセットアップからサーバー起動までを行います。Python 3.x と Node.js/npm が事前にインストールされている必要があります。
 
@@ -100,8 +90,7 @@ docker build -t todo-app .
 docker run --rm -p 5000:5000 todo-app
 ```
 
-- バックエンド API: http://localhost:5000
-- フロントエンド: ルートコンテナにビルド成果物が同梱されるため、静的ホスティング設定の追加で配信できます（今後の拡張ポイント）。
+- フルスタックサーバー: http://localhost:5000
 
 ### サンプルデータ
 - `backend/tests/data/sample_tasks.json` にテストや UI 検証で利用できるサンプルタスクを同梱しています。
@@ -122,7 +111,6 @@ docker run --rm -p 5000:5000 todo-app
 │   ├── Dockerfile
 │   └── package.json
 ├── run.bat           # Windows 用起動バッチ
-├── docker-compose.yml
 ├── .env.example
 └── README.md
 ```

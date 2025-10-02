@@ -1,6 +1,8 @@
 @echo off
 setlocal ENABLEEXTENSIONS
 
+chcp 65001 >nul
+
 set "PROJECT_ROOT=%~dp0"
 set "BACKEND_DIR=%PROJECT_ROOT%backend"
 set "FRONTEND_DIR=%PROJECT_ROOT%frontend"
@@ -97,11 +99,16 @@ if errorlevel 1 (
 echo.
 echo フロントエンド依存関係を確認しています...
 set "NEED_NODE_INSTALL="
+set "NEED_FRONTEND_BUILD="
 if exist "%FRONTEND_DIR%\package.json" (
     if defined FORCE_INSTALL (
         set "NEED_NODE_INSTALL=1"
+        set "NEED_FRONTEND_BUILD=1"
     ) else if not exist "%FRONTEND_DIR%\node_modules" (
         set "NEED_NODE_INSTALL=1"
+        set "NEED_FRONTEND_BUILD=1"
+    ) else if not exist "%FRONTEND_DIR%\dist\index.html" (
+        set "NEED_FRONTEND_BUILD=1"
     )
 )
 
@@ -119,9 +126,18 @@ if defined NEED_NODE_INSTALL (
     popd
 )
 
-if not defined NPM_AVAILABLE (
-    echo npm コマンドが見つからなかったため、フロントエンドを起動できません。
-    goto ERROR
+if defined NEED_FRONTEND_BUILD (
+    if not defined NPM_AVAILABLE (
+        echo npm コマンドが見つからなかったため、フロントエンドをビルドできません。
+        goto ERROR
+    )
+    pushd "%FRONTEND_DIR%"
+    call npm run build
+    if errorlevel 1 (
+        popd
+        goto ERROR
+    )
+    popd
 )
 
 if not exist "%VENV_DIR%\Scripts\activate.bat" (
@@ -131,22 +147,33 @@ if not exist "%VENV_DIR%\Scripts\activate.bat" (
 
 echo.
 echo === サーバーを起動します ===
-start "todo-app Backend" cmd /k "cd /d \"%BACKEND_DIR%\" ^&^& call .venv\Scripts\activate.bat ^&^& python run.py"
-if errorlevel 1 goto ERROR
-
-if exist "%FRONTEND_DIR%\package.json" (
-    start "todo-app Frontend" cmd /k "cd /d \"%FRONTEND_DIR%\" ^&^& npm run dev -- --host"
-    if errorlevel 1 goto ERROR
+pushd "%BACKEND_DIR%"
+call "%VENV_DIR%\Scripts\activate.bat"
+if errorlevel 1 (
+    popd
+    goto ERROR
+)
+set "FRONTEND_DIST_DIR=%FRONTEND_DIR%\dist"
+python run.py
+set "SERVER_EXIT_CODE=%ERRORLEVEL%"
+call deactivate >nul 2>&1
+popd
+if not "%SERVER_EXIT_CODE%"=="0" (
+    echo.
+    echo サーバーが異常終了しました。(終了コード %SERVER_EXIT_CODE%)
+    goto ERROR
 )
 
 echo.
-echo バックエンドとフロントエンドを新しいウィンドウで起動しました。
-echo 各ウィンドウを閉じるとサーバーが停止します。
-pause
-exit /b 0
+echo サーバーを終了しました。
+goto END
 
 :ERROR
 echo.
 echo 処理中にエラーが発生しました。上記のメッセージを確認してください。
 pause
 exit /b 1
+
+:END
+pause
+exit /b 0

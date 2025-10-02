@@ -72,17 +72,36 @@ docker-compose up -d --build
 - バックエンド API: http://localhost:5000
 
 ### ローカル（Windows）環境での起動
-1. PowerShell を管理者権限なしで開く。
-2. 初回のみ以下のコマンドで依存関係をインストール。
+1. `git pull` で最新の状態を取得します。
+2. プロジェクトルートにある `run.bat` をダブルクリックするか、PowerShell/コマンドプロンプトから実行します。
    ```powershell
-   .\scripts\start_local.ps1 -Install
+   .\run.bat
    ```
-3. バックエンドとフロントエンドを同時に起動。
-   ```powershell
-   .\scripts\start_local.ps1
-   ```
-   - バックエンド: http://localhost:5000
-   - フロントエンド: http://localhost:8080
+   - 初回実行時は `backend/.venv` に仮想環境が作成され、Python 依存関係が自動的にインストールされます。
+   - フロントエンドの `node_modules` が存在しない場合は `npm install` が自動的に実行されます。
+   - 依存関係を再インストールしたい場合は `-Install` オプションを付けてください。
+     ```powershell
+     .\run.bat -Install
+     ```
+   - セットアップ完了後、バックエンドとフロントエンドが別ウィンドウで起動します。ログを確認し、終了するときは各ウィンドウを閉じてください。
+3. バックエンド API: http://localhost:5000
+4. フロントエンド: http://localhost:8080
+
+> メモ: `run.bat` 単体でセットアップからサーバー起動までを行います。Python 3.x と Node.js/npm が事前にインストールされている必要があります。
+
+### Docker を利用した起動
+単一コンテナで API とフロントエンド資産をまとめる Dockerfile をルートに配置しています。将来的な本番デプロイや CI 用途を想定しています。
+
+```bash
+git clone [repository-url]
+cd todo-app
+cp .env.example .env
+docker build -t todo-app .
+docker run --rm -p 5000:5000 todo-app
+```
+
+- バックエンド API: http://localhost:5000
+- フロントエンド: ルートコンテナにビルド成果物が同梱されるため、静的ホスティング設定の追加で配信できます（今後の拡張ポイント）。
 
 ### サンプルデータ
 - `backend/tests/data/sample_tasks.json` にテストや UI 検証で利用できるサンプルタスクを同梱しています。
@@ -91,6 +110,7 @@ docker-compose up -d --build
 5. ディレクトリ構成（案）
 ```
 .
+├── Dockerfile       # ルートコンテナ（将来的な単一イメージ化）
 ├── backend/          # Flaskバックエンド
 │   ├── app/
 │   ├── tests/
@@ -101,7 +121,7 @@ docker-compose up -d --build
 │   ├── src/
 │   ├── Dockerfile
 │   └── package.json
-├── scripts/          # 起動スクリプト
+├── run.bat           # Windows 用起動バッチ
 ├── docker-compose.yml
 ├── .env.example
 └── README.md

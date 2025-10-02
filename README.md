@@ -3,12 +3,14 @@
 1. 概要
 社内でのタスク管理を効率化するために内製するタスク管理アプリケーションです。
 このドキュメントは、開発にあたっての要件定義をまとめたものです。
+
 2. 技術スタック
 本プロジェクトは以下の技術スタックで開発を行います。
 Backend: Python 3.x, Flask
 Frontend: Vue.js, Bootstrap
 Database: (TBD - PostgreSQL, SQLite etc.)
 Deployment: Docker, Docker Compose
+
 3. 要件定義（機能一覧）
 3.1. タスク管理機能
 基本項目
@@ -25,6 +27,7 @@ Deployment: Docker, Docker Compose
 階層構造（親子タスク）
 タスクにサブタスク（子タスク）を複数設定できる。
 階層の深さに制限は設けない（無限に入れ子可能）。
+
 3.2. 表示（ビュー）機能
 リスト表示 (デフォルト)
 タスクを一覧形式で表示する。
@@ -40,6 +43,7 @@ Deployment: Docker, Docker Compose
 <summary>検討外の表示方式</summary>
 看板表示: 視認性の観点から、今回の実装からは除外します。
 </details>
+
 3.3. 通知・連携機能
 リマインド機能
 期限が近づいたタスクについて、ユーザーに通知する。
@@ -48,34 +52,48 @@ Deployment: Docker, Docker Compose
 外部サービス連携 (検討事項)
 Microsoft Outlookの予定表との連携。
 Microsoft Teamsとの連携。
+
 3.4. UI/UX
 レスポンシブデザイン: PCだけでなく、スマートフォンやタブレットなどのモバイルデバイスでも快適に操作できるUIを提供する。
 入力の簡素化: 日々の利用でストレスにならないよう、タスク登録や更新の操作は極力シンプルにする。詳細な実績工数の入力は不要とする。
 ヘルプ機能: 優先度や作業量の定義など、ユーザーが迷いやすい項目にはツールチップで説明を表示する。
+
 4. 開発環境の構築
 本プロジェクトはDockerを使用して環境を構築します。
-リポジトリのクローン
-code
-Bash
+
+### Docker を利用した起動
+```bash
 git clone [repository-url]
 cd task-management-tool
-環境変数ファイルの設定
-.env.example ファイルをコピーして .env ファイルを作成し、必要な環境変数を設定します。
-Dockerコンテナの起動
-code
-Bash
+cp .env.example .env
 docker-compose up -d --build
-アプリケーションへのアクセス
-フロントエンド: http://localhost:8080
-バックエンド API: http://localhost:5000
-(ポート番号は docker-compose.yml の設定に依存します)
+```
+- フロントエンド: http://localhost:8080
+- バックエンド API: http://localhost:5000
+
+### ローカル（Windows）環境での起動
+1. PowerShell を管理者権限なしで開く。
+2. 初回のみ以下のコマンドで依存関係をインストール。
+   ```powershell
+   .\scripts\start_local.ps1 -Install
+   ```
+3. バックエンドとフロントエンドを同時に起動。
+   ```powershell
+   .\scripts\start_local.ps1
+   ```
+   - バックエンド: http://localhost:5000
+   - フロントエンド: http://localhost:8080
+
+### サンプルデータ
+- `backend/tests/data/sample_tasks.json` にテストや UI 検証で利用できるサンプルタスクを同梱しています。
+- `GET /api/tasks` エンドポイントはこのサンプルデータを返却します。
+
 5. ディレクトリ構成（案）
-code
-Code
+```
 .
 ├── backend/          # Flaskバックエンド
 │   ├── app/
-│   ├── migrations/
+│   ├── tests/
 │   ├── Dockerfile
 │   └── requirements.txt
 ├── frontend/         # Vue.jsフロントエンド
@@ -83,6 +101,8 @@ Code
 │   ├── src/
 │   ├── Dockerfile
 │   └── package.json
+├── scripts/          # 起動スクリプト
 ├── docker-compose.yml
 ├── .env.example
 └── README.md
+```

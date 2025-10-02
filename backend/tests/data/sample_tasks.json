@@ -1,0 +1,55 @@
+[
+  {
+    "id": "task-001",
+    "title": "要件定義書のドラフト作成",
+    "detail": "主要な機能要件と非機能要件を整理する",
+    "assignee": "佐藤",
+    "owner": "田中",
+    "start_date": "2024-04-01",
+    "due_date": "2024-04-05",
+    "status": "作業中",
+    "priority": "高",
+    "effort": "大",
+    "children": [
+      {
+        "id": "task-001-1",
+        "title": "既存業務ヒアリング",
+        "detail": "利用部門とのヒアリング実施",
+        "assignee": "佐藤",
+        "owner": "田中",
+        "start_date": "2024-04-01",
+        "due_date": "2024-04-02",
+        "status": "完了",
+        "priority": "中",
+        "effort": "中",
+        "children": []
+      },
+      {
+        "id": "task-001-2",
+        "title": "要件ドラフト作成",
+        "detail": "ヒアリング内容を整理してドキュメント化",
+        "assignee": "佐藤",
+        "owner": "田中",
+        "start_date": "2024-04-03",
+        "due_date": "2024-04-05",
+        "status": "作業中",
+        "priority": "高",
+        "effort": "大",
+        "children": []
+      }
+    ]
+  },
+  {
+    "id": "task-002",
+    "title": "UI プロトタイプ作成",
+    "detail": "主要画面のワイヤーフレーム作成",
+    "assignee": "鈴木",
+    "owner": "田中",
+    "start_date": "2024-04-06",
+    "due_date": "2024-04-12",
+    "status": "未着手",
+    "priority": "中",
+    "effort": "中",
+    "children": []
+  }
+]

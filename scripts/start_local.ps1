@@ -1,6 +1,10 @@
-Param(
+﻿Param(
     [switch]$Install
 )
+
+[Console]::InputEncoding = [System.Text.Encoding]::UTF8
+[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+$PSDefaultParameterValues['*:Encoding'] = 'utf8'
 
 $ErrorActionPreference = 'Stop'
 

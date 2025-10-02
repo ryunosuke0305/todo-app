@@ -18,7 +18,6 @@
         v-for="child in task.children"
         :key="child.id"
         :task="child"
-        :level="level + 1"
       />
     </div>
   </div>
@@ -31,10 +30,6 @@ const props = defineProps({
   task: {
     type: Object,
     required: true
-  },
-  level: {
-    type: Number,
-    default: 0
   }
 })
 

@@ -1,9 +1,11 @@
 from __future__ import annotations
 
 import importlib
+from datetime import date, timedelta
 from pathlib import Path
 
 from app import db
+from app.schemas import Task
 
 
 def test_init_db_loads_sample_data(tmp_path, monkeypatch):
@@ -37,3 +39,58 @@ def test_init_db_uses_fallback_when_sample_missing(tmp_path, monkeypatch):
     assert len(tasks) == 1
     assert tasks[0]["id"] == "fallback"
     assert tasks[0]["children"] == []
+
+
+def test_insert_update_and_delete_task(tmp_path, monkeypatch):
+    db_path = tmp_path / "crud.sqlite3"
+    monkeypatch.setenv("TODO_DB_PATH", str(db_path))
+    importlib.reload(db)
+
+    sample_path = Path(__file__).parent / "data" / "sample_tasks.json"
+    db.init_db(sample_data_path=sample_path)
+
+    today = date.today()
+    new_task = Task(
+        id="task-new",
+        title="新規タスク",
+        detail="テスト用のタスクです",
+        assignee="テスター",
+        owner="管理者",
+        start_date=today,
+        due_date=today + timedelta(days=7),
+        status="未着手",
+        priority="高",
+        effort="小",
+        children=[],
+    )
+
+    db.insert_task(new_task)
+
+    fetched = db.fetch_task("task-new")
+    assert fetched is not None
+    assert fetched["title"] == "新規タスク"
+    assert fetched["parent_id"] is None
+
+    updated_task = Task(
+        id="task-new",
+        title="更新後タスク",
+        detail="更新しました",
+        assignee="テスター2",
+        owner="管理者",
+        start_date=today,
+        due_date=today + timedelta(days=10),
+        status="作業中",
+        priority="中",
+        effort="大",
+        children=[],
+    )
+
+    assert db.update_task(updated_task, parent_id="task-001")
+
+    updated = db.fetch_task("task-new")
+    assert updated is not None
+    assert updated["title"] == "更新後タスク"
+    assert updated["parent_id"] == "task-001"
+
+    assert db.delete_task("task-new")
+    assert db.fetch_task("task-new") is None

@@ -5,7 +5,7 @@ import sqlite3
 from contextlib import closing
 from datetime import date
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Optional
+from typing import Any, Dict, Iterable, List, Optional, Sequence
 
 from .schemas import Task
 
@@ -86,11 +86,83 @@ def fetch_tasks() -> List[Dict[str, Any]]:
     return roots
 
 
+def fetch_task(task_id: str) -> Optional[Dict[str, Any]]:
+    """指定した ID のタスクを取得する。子タスクも含めて再帰的に構築する。"""
+
+    with closing(get_connection()) as conn:
+        row = conn.execute(
+            "SELECT id, title, detail, assignee, owner, start_date, due_date, status, priority, effort, parent_id "
+            "FROM tasks WHERE id = ?",
+            (task_id,),
+        ).fetchone()
+
+        if row is None:
+            return None
+
+        return _build_task_with_children(conn, row)
+
+
 def insert_task(task: Task, parent_id: Optional[str] = None) -> None:
     """タスクを永続化する。子タスクも再帰的に登録する。"""
     with closing(get_connection()) as conn:
         _insert_task(conn, task.to_dict(), parent_id=parent_id)
         conn.commit()
+
+
+def update_task(task: Task, parent_id: Optional[str] = None) -> bool:
+    """タスク情報を更新する。対象が存在しない場合は False を返す。"""
+
+    payload = task.to_dict()
+    with closing(get_connection()) as conn:
+        cur = conn.execute(
+            """
+            UPDATE tasks
+            SET
+                title = ?,
+                detail = ?,
+                assignee = ?,
+                owner = ?,
+                start_date = ?,
+                due_date = ?,
+                status = ?,
+                priority = ?,
+                effort = ?,
+                parent_id = ?
+            WHERE id = ?
+            """,
+            (
+                payload["title"],
+                payload.get("detail", ""),
+                payload.get("assignee", ""),
+                payload.get("owner", ""),
+                payload.get("start_date"),
+                payload.get("due_date"),
+                payload.get("status", "未着手"),
+                payload.get("priority", "中"),
+                payload.get("effort", "中"),
+                parent_id,
+                task.id,
+            ),
+        )
+        conn.commit()
+        return cur.rowcount > 0
+
+
+def delete_task(task_id: str) -> bool:
+    """指定したタスクとその配下のタスクを削除する。"""
+
+    with closing(get_connection()) as conn:
+        ids_to_delete = _collect_descendant_ids(conn, task_id)
+        if not ids_to_delete:
+            return False
+
+        placeholders = ",".join(["?"] * len(ids_to_delete))
+        conn.execute(
+            f"DELETE FROM tasks WHERE id IN ({placeholders})",
+            tuple(ids_to_delete),
+        )
+        conn.commit()
+        return True
 
 
 def _insert_task(conn: sqlite3.Connection, task_payload: Dict[str, Any], parent_id: Optional[str]) -> None:
@@ -132,8 +204,36 @@ def _row_to_task(row: sqlite3.Row) -> Dict[str, Any]:
         "status": row["status"],
         "priority": row["priority"],
         "effort": row["effort"],
+        "parent_id": row["parent_id"],
         "children": [],
     }
+
+
+def _build_task_with_children(conn: sqlite3.Connection, row: sqlite3.Row) -> Dict[str, Any]:
+    task = _row_to_task(row)
+    child_rows = conn.execute(
+        "SELECT id, title, detail, assignee, owner, start_date, due_date, status, priority, effort, parent_id "
+        "FROM tasks WHERE parent_id = ?",
+        (row["id"],),
+    ).fetchall()
+
+    for child_row in child_rows:
+        task["children"].append(_build_task_with_children(conn, child_row))
+
+    task["children"].sort(key=lambda t: (t["start_date"], t["id"]))
+    return task
+
+
+def _collect_descendant_ids(conn: sqlite3.Connection, task_id: str) -> Sequence[str]:
+    row = conn.execute("SELECT id FROM tasks WHERE id = ?", (task_id,)).fetchone()
+    if row is None:
+        return []
+
+    ids: List[str] = [row["id"]]
+    child_rows = conn.execute("SELECT id FROM tasks WHERE parent_id = ?", (task_id,)).fetchall()
+    for child in child_rows:
+        ids.extend(_collect_descendant_ids(conn, child["id"]))
+    return ids
 
 
 def _load_seed_tasks(sample_data_path: Optional[Path]) -> Iterable[Dict[str, Any]]:

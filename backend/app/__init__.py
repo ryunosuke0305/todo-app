@@ -6,7 +6,11 @@ from typing import Optional
 
 from flask import Flask, send_from_directory
 
+from .db import init_db
 from .routes import api_bp
+
+
+SAMPLE_DATA_PATH = Path(__file__).resolve().parent.parent / "tests" / "data" / "sample_tasks.json"
 
 
 def create_app() -> Flask:
@@ -15,6 +19,7 @@ def create_app() -> Flask:
     static_folder = str(frontend_dist) if frontend_dist else None
     app = Flask(__name__, static_folder=static_folder, static_url_path="/")
     app.register_blueprint(api_bp, url_prefix="/api")
+    init_db(sample_data_path=SAMPLE_DATA_PATH)
 
     if frontend_dist:
         _register_frontend_routes(app, frontend_dist)

@@ -12,7 +12,7 @@
     />
     <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}" />
   </head>
-  <body>
+  <body class="bg-body-tertiary">
     <div id="app" class="d-flex flex-column min-vh-100" v-cloak>
       <div
         class="offcanvas offcanvas-start"
@@ -121,23 +121,25 @@
         </div>
       </div>
 
-      <header class="border-bottom bg-light">
-        <div class="container py-3 d-flex align-items-center gap-3">
-          <button
-            class="btn btn-outline-secondary d-flex align-items-center"
-            type="button"
-            data-bs-toggle="offcanvas"
-            data-bs-target="#globalNavigation"
-            aria-controls="globalNavigation"
-          >
-            <span class="me-2" aria-hidden="true">&#9776;</span>
-            メニュー
-          </button>
-          <div>
-            <h1 class="h4 mb-1">タスク管理</h1>
-            <p class="text-muted mb-0 small">API を通じてタスクの登録・更新・削除が行えます。</p>
+      <header class="border-bottom bg-white shadow-sm">
+        <div class="container py-3 d-flex flex-wrap align-items-center gap-3">
+          <div class="d-flex align-items-center gap-3">
+            <button
+              class="btn btn-outline-secondary d-flex align-items-center"
+              type="button"
+              data-bs-toggle="offcanvas"
+              data-bs-target="#globalNavigation"
+              aria-controls="globalNavigation"
+            >
+              <span class="fw-bold" aria-hidden="true">&#9776;</span>
+              <span class="ms-2">メニュー</span>
+            </button>
+            <div>
+              <h1 class="h4 mb-1 text-body-emphasis">タスク管理</h1>
+              <p class="text-muted mb-0 small">API を通じてタスクの登録・更新・削除が行えます。</p>
+            </div>
           </div>
-          <div class="ms-auto">
+          <div class="ms-lg-auto">
             <button type="button" class="btn btn-primary" @click="openCreate()">新規タスク</button>
           </div>
         </div>

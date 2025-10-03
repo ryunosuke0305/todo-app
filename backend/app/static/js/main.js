@@ -20,9 +20,9 @@
   };
 
   const resolveStatusClass = (status) => {
-    if (status === '完了') return 'bg-success';
-    if (status === '作業中') return 'bg-primary';
-    return 'bg-secondary';
+    if (status === '完了') return 'text-bg-success';
+    if (status === '作業中') return 'text-bg-primary';
+    return 'text-bg-secondary';
   };
 
   const resolveErrorMessage = (error) => {
@@ -66,6 +66,13 @@
       );
       const hasChildren = computed(() => childTasks.value.length > 0);
       const badgeClass = computed(() => resolveStatusClass(props.task.status));
+      const assigneeText = computed(() => (props.task.assignee ?? '').trim());
+      const ownerText = computed(() => (props.task.owner ?? '').trim());
+      const hasAssignee = computed(() => assigneeText.value.length > 0);
+      const hasOwner = computed(() => ownerText.value.length > 0);
+      const hasAssignment = computed(() => hasAssignee.value || hasOwner.value);
+      const detailText = computed(() => (props.task.detail ?? '').trim());
+      const hasDetail = computed(() => detailText.value.length > 0);
 
       const handleEdit = () => emit('edit', props.task);
       const handleAddChild = () => emit('add-child', props.task);
@@ -75,22 +82,32 @@
         childTasks,
         hasChildren,
         badgeClass,
+        assigneeText,
+        ownerText,
+        hasAssignee,
+        hasOwner,
+        hasAssignment,
+        detailText,
+        hasDetail,
         handleEdit,
         handleAddChild,
         handleDelete
       };
     },
     template: `
-      <div class="list-group-item" :data-task-id="task.id">
-        <div class="d-flex justify-content-between align-items-center">
-          <div>
-            <strong>{{ task.title }}</strong>
-            <small class="ms-2 text-muted">{{ task.assignee }} / {{ task.owner }}</small>
+      <article class="list-group-item p-4 mb-3" :data-task-id="task.id">
+        <div class="d-flex flex-column flex-lg-row gap-3 align-items-lg-center">
+          <div class="flex-grow-1">
+            <h3 class="h5 mb-1 text-body-emphasis">{{ task.title }}</h3>
+            <p class="mb-0 text-secondary small" v-if="hasAssignment">
+              <span v-if="hasAssignee">担当: {{ assigneeText }}</span>
+              <span v-if="hasOwner" class="ms-2">責任者: {{ ownerText }}</span>
+            </p>
           </div>
-          <span class="badge" :class="badgeClass">{{ task.status }}</span>
+          <span class="badge rounded-pill px-3 py-2 text-uppercase" :class="badgeClass">{{ task.status }}</span>
         </div>
-        <p class="mb-1 text-muted">{{ task.detail }}</p>
-        <ul class="list-inline small mb-0">
+        <p class="mt-3 mb-0 text-secondary" v-if="hasDetail">{{ detailText }}</p>
+        <ul class="list-inline small text-secondary mb-0 mt-3">
           <li class="list-inline-item">優先度: {{ task.priority }}</li>
           <li class="list-inline-item">作業量: {{ task.effort }}</li>
           <li class="list-inline-item">期間: {{ task.start_date }} ~ {{ task.due_date }}</li>
@@ -100,7 +117,7 @@
           <button type="button" class="btn btn-sm btn-outline-secondary" @click="handleAddChild">子タスク追加</button>
           <button type="button" class="btn btn-sm btn-outline-danger" @click="handleDelete">削除</button>
         </div>
-        <div v-if="hasChildren" class="mt-3 ms-3 border-start ps-3">
+        <div v-if="hasChildren" class="task-children mt-4 ms-lg-3 border-start ps-3 ps-lg-4">
           <task-item
             v-for="child in childTasks"
             :key="child.id"
@@ -110,7 +127,7 @@
             @delete="$emit('delete', $event)"
           ></task-item>
         </div>
-      </div>
+      </article>
     `
   };
 

@@ -1,11 +1,11 @@
 # todo-app
 
 ## 概要
-社内のタスク管理を効率化するための学習用フルスタックプロジェクトです。Flask 製 API から取得したサンプルタスクを Vue.js で表示する最小構成を提供し、今後の機能拡張の土台になります。
+社内のタスク管理を効率化するための学習用フルスタックプロジェクトです。Flask 製の単一サーバーが API と UI の双方を提供し、今後の機能拡張の土台になります。
 
 ## 技術スタック
-- **Backend**: Python 3 / Flask
-- **Frontend**: Vue 3 / Vite / Bootstrap 5
+- **サーバー**: Python 3 / Flask / SQLite / Bootstrap 5
+- **フロントエンド**: Flask テンプレート + Vue 3（CDN 配信、追加ビルド不要）
 - **Deployment**: Docker（単一コンテナでの動作を想定）
 
 ## 要件定義（サマリ）
@@ -37,7 +37,6 @@
 ### Windows（PowerShell / コマンドプロンプト）
 1. `run.bat` を実行すると、以下を自動で行います。
    - Python 仮想環境の作成と依存関係のインストール。
-   - フロントエンド依存関係のインストールとビルド（必要に応じて）。
    - Flask アプリケーションの起動。
 2. 依存関係を再インストールしたい場合は `run.bat -Install` を使用してください。
 3. サーバーは `http://localhost:5000` で起動します。
@@ -56,16 +55,12 @@ docker run --rm -p 5000:5000 todo-app
 ## ディレクトリ構成
 ```
 .
-├── Dockerfile              # フロントエンドとバックエンドを統合したコンテナ
+├── Dockerfile              # 単一サーバー用コンテナ定義
 ├── backend/                # Flask アプリケーション
-│   ├── app/                # アプリケーション本体（Blueprint 等）
+│   ├── app/                # API・UI 実装一式
 │   ├── tests/              # Pytest によるテストとサンプルデータ
 │   ├── Dockerfile
 │   └── requirements.txt
-├── frontend/               # Vue.js フロントエンド
-│   ├── src/
-│   ├── Dockerfile
-│   └── package.json
 └── run.bat                 # Windows 用セットアップ & 起動スクリプト
 ```
 

@@ -5,7 +5,6 @@ chcp 65001 >nul
 
 set "PROJECT_ROOT=%~dp0"
 set "BACKEND_DIR=%PROJECT_ROOT%backend"
-set "FRONTEND_DIR=%PROJECT_ROOT%frontend"
 set "VENV_DIR=%BACKEND_DIR%\.venv"
 set "FORCE_INSTALL="
 
@@ -88,58 +87,6 @@ if defined FORCE_INSTALL (
     popd
 )
 
-set "NPM_AVAILABLE="
-where npm >nul 2>&1
-if errorlevel 1 (
-    set "NPM_AVAILABLE="
-) else (
-    set "NPM_AVAILABLE=1"
-)
-
-echo.
-echo フロントエンド依存関係を確認しています...
-set "NEED_NODE_INSTALL="
-set "NEED_FRONTEND_BUILD="
-if exist "%FRONTEND_DIR%\package.json" (
-    if defined FORCE_INSTALL (
-        set "NEED_NODE_INSTALL=1"
-        set "NEED_FRONTEND_BUILD=1"
-    ) else if not exist "%FRONTEND_DIR%\node_modules" (
-        set "NEED_NODE_INSTALL=1"
-        set "NEED_FRONTEND_BUILD=1"
-    ) else if not exist "%FRONTEND_DIR%\dist\index.html" (
-        set "NEED_FRONTEND_BUILD=1"
-    )
-)
-
-if defined NEED_NODE_INSTALL (
-    if not defined NPM_AVAILABLE (
-        echo npm コマンドが見つかりませんでした。Node.js をインストールし、パスを通してください。
-        goto ERROR
-    )
-    pushd "%FRONTEND_DIR%"
-    call npm install
-    if errorlevel 1 (
-        popd
-        goto ERROR
-    )
-    popd
-)
-
-if defined NEED_FRONTEND_BUILD (
-    if not defined NPM_AVAILABLE (
-        echo npm コマンドが見つからなかったため、フロントエンドをビルドできません。
-        goto ERROR
-    )
-    pushd "%FRONTEND_DIR%"
-    call npm run build
-    if errorlevel 1 (
-        popd
-        goto ERROR
-    )
-    popd
-)
-
 if not exist "%VENV_DIR%\Scripts\activate.bat" (
     echo 仮想環境のアクティベーションスクリプトが見つかりませんでした。
     goto ERROR
@@ -153,7 +100,6 @@ if errorlevel 1 (
     popd
     goto ERROR
 )
-set "FRONTEND_DIST_DIR=%FRONTEND_DIR%\dist"
 python run.py
 set "SERVER_EXIT_CODE=%ERRORLEVEL%"
 call deactivate >nul 2>&1

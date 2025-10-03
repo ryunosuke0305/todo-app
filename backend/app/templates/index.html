@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>タスク管理</title>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
+      integrity="sha384-Vnk7m0G1AA19i0l+xYiV6KU2GKNR3EIBgzHuLlHotE5T7V6czS4EzFIdJIYYdC0J"
+      crossorigin="anonymous"
+    />
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}" />
+  </head>
+  <body>
+    <div id="app" class="d-flex flex-column min-vh-100" v-cloak>
+      <div
+        class="offcanvas offcanvas-start"
+        tabindex="-1"
+        id="globalNavigation"
+        aria-labelledby="globalNavigationLabel"
+      >
+        <div class="offcanvas-header">
+          <h5 class="offcanvas-title" id="globalNavigationLabel">メニュー</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="閉じる"></button>
+        </div>
+        <div class="offcanvas-body">
+          <nav class="nav flex-column gap-1">
+            <span class="text-uppercase text-muted small">ナビゲーション</span>
+            <span class="nav-link disabled" aria-disabled="true">ダッシュボード（準備中）</span>
+            <span class="nav-link disabled" aria-disabled="true">レポート（準備中）</span>
+            <span class="nav-link disabled" aria-disabled="true">設定（準備中）</span>
+          </nav>
+        </div>
+      </div>
+
+      <div
+        class="modal fade"
+        id="taskModal"
+        tabindex="-1"
+        aria-labelledby="taskModalLabel"
+        aria-hidden="true"
+        ref="modalElement"
+      >
+        <div class="modal-dialog modal-lg modal-dialog-scrollable">
+          <div class="modal-content">
+            <form @submit.prevent="handleSubmit">
+              <div class="modal-header">
+                <h5 class="modal-title" id="taskModalLabel">
+                  <span>{{ modalTitle }}</span>
+                  <span class="badge bg-warning text-dark ms-2" v-if="isEditing">編集中</span>
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="閉じる"></button>
+              </div>
+              <div class="modal-body">
+                <div class="alert alert-danger" role="alert" v-if="formError">{{ formError }}</div>
+                <div class="alert alert-info d-flex justify-content-between align-items-center" role="alert" v-if="parentId">
+                  <span>親タスク: <strong>{{ parentLabel }}</strong></span>
+                  <button type="button" class="btn btn-sm btn-outline-light text-dark" @click="clearParent">親タスク解除</button>
+                </div>
+                <div class="row g-3">
+                  <div class="col-md-6">
+                    <label class="form-label" for="taskTitle">タイトル<span class="text-danger">*</span></label>
+                    <input type="text" class="form-control" id="taskTitle" v-model.trim="form.title" required />
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label" for="taskAssignee">担当者</label>
+                    <input type="text" class="form-control" id="taskAssignee" v-model="form.assignee" />
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label" for="taskOwner">責任者</label>
+                    <input type="text" class="form-control" id="taskOwner" v-model="form.owner" />
+                  </div>
+                  <div class="col-12">
+                    <label class="form-label" for="taskDetail">詳細</label>
+                    <textarea class="form-control" id="taskDetail" rows="3" v-model="form.detail"></textarea>
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label" for="taskStartDate">開始日<span class="text-danger">*</span></label>
+                    <input type="date" class="form-control" id="taskStartDate" v-model="form.start_date" required />
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label" for="taskDueDate">期限<span class="text-danger">*</span></label>
+                    <input type="date" class="form-control" id="taskDueDate" v-model="form.due_date" required />
+                  </div>
+                  <div class="col-md-4">
+                    <label class="form-label" for="taskStatus">ステータス</label>
+                    <select class="form-select" id="taskStatus" v-model="form.status">
+                      <option value="未着手">未着手</option>
+                      <option value="作業中">作業中</option>
+                      <option value="完了">完了</option>
+                    </select>
+                  </div>
+                  <div class="col-md-4">
+                    <label class="form-label" for="taskPriority">優先度</label>
+                    <select class="form-select" id="taskPriority" v-model="form.priority">
+                      <option value="低">低</option>
+                      <option value="中">中</option>
+                      <option value="高">高</option>
+                    </select>
+                  </div>
+                  <div class="col-md-4">
+                    <label class="form-label" for="taskEffort">作業量</label>
+                    <select class="form-select" id="taskEffort" v-model="form.effort">
+                      <option value="小">小</option>
+                      <option value="中">中</option>
+                      <option value="大">大</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+              <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">キャンセル</button>
+                <button type="submit" class="btn btn-primary" :disabled="submitting">
+                  <span v-if="submitting" class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                  {{ submitLabel }}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <header class="border-bottom bg-light">
+        <div class="container py-3 d-flex align-items-center gap-3">
+          <button
+            class="btn btn-outline-secondary d-flex align-items-center"
+            type="button"
+            data-bs-toggle="offcanvas"
+            data-bs-target="#globalNavigation"
+            aria-controls="globalNavigation"
+          >
+            <span class="me-2" aria-hidden="true">&#9776;</span>
+            メニュー
+          </button>
+          <div>
+            <h1 class="h4 mb-1">タスク管理</h1>
+            <p class="text-muted mb-0 small">API を通じてタスクの登録・更新・削除が行えます。</p>
+          </div>
+          <div class="ms-auto">
+            <button type="button" class="btn btn-primary" @click="openCreate()">新規タスク</button>
+          </div>
+        </div>
+      </header>
+
+      <main class="container py-4 flex-grow-1">
+        <section class="mb-4" v-if="globalError">
+          <div class="alert alert-danger mb-0" role="alert">{{ globalError }}</div>
+        </section>
+        <section>
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h2 class="h5 mb-0">タスク一覧</h2>
+            <button type="button" class="btn btn-outline-success btn-sm" @click="openCreate()">新規タスク</button>
+          </div>
+          <div v-if="loading" class="text-center py-5 text-muted">読み込み中...</div>
+          <div v-else>
+            <p class="text-muted" v-if="!tasks.length">表示できるタスクがありません。</p>
+            <div class="list-group" v-else>
+              <task-item
+                v-for="task in tasks"
+                :key="task.id"
+                :task="task"
+                @edit="openEdit"
+                @add-child="openCreateFromTask"
+                @delete="deleteTask"
+              ></task-item>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <script
+      src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"
+      integrity="sha384-xmI7DiIP9N6byN1Nsx3Rp3XIan+FJxuxMxDPZWS9Vyuk3F7S3Uz7Dnk2a1JpSd2M"
+      crossorigin="anonymous"
+      defer
+    ></script>
+    <script src="https://cdn.jsdelivr.net/npm/vue@3.4.21/dist/vue.global.prod.js" defer></script>
+    <script src="{{ url_for('static', filename='js/main.js') }}" defer></script>
+  </body>
+</html>

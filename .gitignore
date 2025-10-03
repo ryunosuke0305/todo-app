@@ -6,6 +6,6 @@
 __pycache__/
 *.pyc
 
-# フロントエンドの依存関係とビルド成果物
-frontend/node_modules/
-frontend/dist/
+# Node.js 関連
+node_modules/
+dist/
